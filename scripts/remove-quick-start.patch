@@ -1,0 +1,126 @@
+diff --git a/src/components/layout/MainLayout.tsx b/src/components/layout/MainLayout.tsx
+index 435ddc4..b47ff72 100644
+--- a/src/components/layout/MainLayout.tsx
++++ b/src/components/layout/MainLayout.tsx
+@@ -22,7 +22,6 @@ import {
+   IconSidebarOauth,
+   IconSidebarPlugins,
+   IconSidebarProviders,
+-  IconSidebarQuickStart,
+   IconSidebarQuota,
+   IconSidebarStore,
+   IconSidebarSystem,
+@@ -42,7 +41,6 @@ import {
+   resolvePluginAssetURL,
+   type PluginResourceEntry,
+ } from '@/features/plugins/pluginResources';
+-import { APIKEY_FUN_DISPLAY_NAME, hasApiKeyFunConfig } from '@/features/providers/sponsor';
+ import { triggerHeaderRefresh } from '@/hooks/useHeaderRefresh';
+ import { LANGUAGE_LABEL_KEYS, LANGUAGE_ORDER } from '@/utils/constants';
+ import { isSupportedLanguage } from '@/utils/language';
+@@ -50,7 +48,6 @@ import type { Theme } from '@/types';
+ 
+ const sidebarIcons: Record<string, ReactNode> = {
+   dashboard: <IconSidebarDashboard size={18} />,
+-  quickStart: <IconSidebarQuickStart size={18} />,
+   aiProviders: <IconSidebarProviders size={18} />,
+   authFiles: <IconSidebarAuthFiles size={18} />,
+   oauth: <IconSidebarOauth size={18} />,
+@@ -308,7 +305,6 @@ export function MainLayout() {
+ 
+   const fetchConfig = useConfigStore((state) => state.fetchConfig);
+   const clearCache = useConfigStore((state) => state.clearCache);
+-  const config = useConfigStore((state) => state.config);
+ 
+   const theme = useThemeStore((state) => state.theme);
+   const setTheme = useThemeStore((state) => state.setTheme);
+@@ -513,15 +509,6 @@ export function MainLayout() {
+       })
+     : [];
+ 
+-  const isApiKeyFunConfigured = hasApiKeyFunConfig(config);
+-  const quickStartNavItem: SidebarNavLinkItem = {
+-    path: '/quick-start',
+-    label: isApiKeyFunConfigured ? APIKEY_FUN_DISPLAY_NAME : undefined,
+-    labelKey: isApiKeyFunConfigured ? undefined : 'nav.quick_start',
+-    metaKey: 'nav_meta.quick_start',
+-    icon: sidebarIcons.quickStart,
+-  };
+-
+   const navGroups: SidebarNavGroup[] = [
+     {
+       id: 'operate',
+@@ -533,7 +520,6 @@ export function MainLayout() {
+           metaKey: 'nav_meta.dashboard',
+           icon: sidebarIcons.dashboard,
+         },
+-        ...(!isApiKeyFunConfigured ? [quickStartNavItem] : []),
+       ],
+     },
+     {
+@@ -558,7 +544,6 @@ export function MainLayout() {
+           metaKey: 'nav_meta.oauth',
+           icon: sidebarIcons.oauth,
+         },
+-        ...(isApiKeyFunConfigured ? [quickStartNavItem] : []),
+       ],
+     },
+     {
+diff --git a/src/pages/DashboardPage.tsx b/src/pages/DashboardPage.tsx
+index 3aa6c59..14b91e7 100644
+--- a/src/pages/DashboardPage.tsx
++++ b/src/pages/DashboardPage.tsx
+@@ -6,12 +6,10 @@ import {
+   IconBot,
+   IconFileText,
+   IconSatellite,
+-  IconSidebarQuickStart,
+ } from '@/components/ui/icons';
+ import { useAuthStore, useConfigStore, useModelsStore } from '@/stores';
+ import { authFilesApi } from '@/services/api';
+ import { useApiKeysForModels } from '@/hooks/useApiKeysForModels';
+-import { hasApiKeyFunConfig } from '@/features/providers/sponsor';
+ import { formatDateValue } from '@/utils/format';
+ import styles from './DashboardPage.module.scss';
+ 
+@@ -121,7 +119,6 @@ export function DashboardPage() {
+   const totalProviderKeys = providerStats
+     ? Object.values(providerStats).reduce((sum, count) => sum + count, 0)
+     : 0;
+-  const isApiKeyFunConfigured = hasApiKeyFunConfig(config);
+ 
+   const quickStats: QuickStat[] = [
+     {
+@@ -164,17 +161,6 @@ export function DashboardPage() {
+       loading: modelsLoading,
+       sublabel: t('dashboard.available_models_desc'),
+     },
+-    ...(!isApiKeyFunConfigured
+-      ? [
+-          {
+-            label: t('dashboard.quick_start_card'),
+-            value: t('dashboard.quick_start_entry'),
+-            icon: <IconSidebarQuickStart size={24} />,
+-            path: '/quick-start',
+-            sublabel: t('dashboard.quick_start_entry_desc'),
+-          },
+-        ]
+-      : []),
+   ];
+ 
+   const routingStrategyRaw = config?.routingStrategy?.trim() || '';
+diff --git a/src/router/MainRoutes.tsx b/src/router/MainRoutes.tsx
+index 04f3eb9..5360ddd 100644
+--- a/src/router/MainRoutes.tsx
++++ b/src/router/MainRoutes.tsx
+@@ -19,8 +19,8 @@ const createMainRoutes = (supportsPlugin: boolean) => [
+   { path: '/dashboard', element: <DashboardPage /> },
+   { path: '/settings', element: <Navigate to="/config" replace /> },
+   { path: '/api-keys', element: <Navigate to="/config" replace /> },
+-  { path: '/quick-start', element: <ProvidersWorkbenchPage fixedBrand="apikeyFun" /> },
+-  { path: '/quick-start/*', element: <Navigate to="/quick-start" replace /> },
++  { path: '/quick-start', element: <Navigate to="/ai-providers" replace /> },
++  { path: '/quick-start/*', element: <Navigate to="/ai-providers" replace /> },
+   { path: '/ai-providers', element: <ProvidersWorkbenchPage /> },
+   { path: '/ai-providers/*', element: <Navigate to="/ai-providers" replace /> },
+   { path: '/auth-files', element: <AuthFilesPage /> },

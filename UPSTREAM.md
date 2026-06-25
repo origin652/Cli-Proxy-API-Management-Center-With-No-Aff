@@ -46,6 +46,23 @@ git commit   # 若 merge/rebase 尚未完成提交
 git push noaff main
 ```
 
+## 一键同步 + 去 aff + 发 Release
+
+在 **工作区干净**、当前分支为 `main` 时，在 Git Bash / WSL / Linux / macOS 下执行：
+
+```bash
+bash scripts/sync-and-release.sh
+```
+
+脚本会依次：
+
+1. `git fetch origin` 并 `git merge origin/main`（有冲突则 **退出并提示** 你手动解决）
+2. 应用 `scripts/remove-quick-start.patch`（去掉侧栏/仪表盘快速开始并重定向路由）
+3. `git push noaff main`
+4. 自动递增 tag（如 `v1.9.4-noaff.2`）并 `git push noaff <tag>`，触发 GitHub Actions 打包 `management.html`
+
+可选环境变量：`UPSTREAM_REMOTE`、`FORK_REMOTE`、`TAG_PREFIX`（默认 `noaff`）。
+
 ## 日常推送
 
 只推送到自己的仓库：
