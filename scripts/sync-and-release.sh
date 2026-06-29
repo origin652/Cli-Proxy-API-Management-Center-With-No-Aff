@@ -91,19 +91,37 @@ fi
 log "Pushing $BRANCH to $FORK_REMOTE..."
 git push "$FORK_REMOTE" "$BRANCH"
 
-next_tag() {
+# Latest upstream version tag reachable from HEAD (pure semver like v1.17.8).
+# Falls back to the highest noaff base if no upstream tag is reachable.
+upstream_base_tag() {
+  local t
+  while IFS= read -r t; do
+    if [[ "$t" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      echo "$t"
+      return
+    fi
+  done < <(git tag -l 'v[0-9]*' --merged HEAD --sort=-v:refname)
+  # No upstream version tag reachable; reuse latest noaff base as fallback.
   local latest
-  latest="$(git tag -l 'v*-'"$TAG_PREFIX"'.*' --sort=-v:refname | head -n 1 || true)"
-  if [[ -z "$latest" ]]; then
-    echo "v0.0.1-$TAG_PREFIX.1"
+  latest="$(git tag -l 'v*'"-$TAG_PREFIX"'.*' --sort=-v:refname | head -n 1 || true)"
+  if [[ "$latest" =~ ^v(.+)-${TAG_PREFIX}\.[0-9]+$ ]]; then
+    echo "v${BASH_REMATCH[1]}"
     return
   fi
-  if [[ "$latest" =~ ^v(.+)-${TAG_PREFIX}\.([0-9]+)$ ]]; then
-    local base="${BASH_REMATCH[1]}" n="${BASH_REMATCH[2]}"
-    echo "v${base}-${TAG_PREFIX}.$((n + 1))"
-    return
+  echo "v0.0.1"
+}
+
+next_tag() {
+  local base
+  base="$(upstream_base_tag)"
+  base="${base#v}"  # strip leading 'v' -> e.g. 1.17.8
+  local n=1 latest_n
+  # Highest existing noaff suffix number for this exact base version.
+  latest_n="$(git tag -l "v${base}-${TAG_PREFIX}.*" --sort=-v:refname | head -n 1 || true)"
+  if [[ "$latest_n" =~ ^v${base}-${TAG_PREFIX}\.([0-9]+)$ ]]; then
+    n=$(( ${BASH_REMATCH[1]} + 1 ))
   fi
-  echo "v$(date +%Y.%m.%d)-${TAG_PREFIX}.1"
+  echo "v${base}-${TAG_PREFIX}.${n}"
 }
 
 NEW_TAG="$(next_tag)"
