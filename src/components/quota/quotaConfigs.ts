@@ -32,6 +32,7 @@ import {
   antigravitySubscriptionApi,
   apiCallApi,
   authFilesApi,
+  codexStickyFingerprintApi,
   getApiCallErrorMessage,
   type AntigravitySubscriptionSummary,
 } from '@/services/api';
@@ -62,6 +63,7 @@ import {
   resolveCodexChatgptAccountId,
   resolveCodexPlanType,
   resolveCodexSubscriptionActiveUntil,
+  isCodexStickyFingerprintPluginActive,
   formatCodexResetLabel,
   formatQuotaResetTime,
   formatKimiResetHint,
@@ -539,20 +541,25 @@ const fetchCodexResetCredits = async (
   t: TFunction
 ): Promise<CodexResetCreditsData> => {
   try {
-    const result = await apiCallApi.request(
-      {
-        authIndex,
-        method: 'GET',
-        url: CODEX_RATE_LIMIT_RESET_CREDITS_URL,
-        header: {
-          ...requestHeader,
-          Accept: 'application/json',
-          'OpenAI-Beta': 'codex-1',
-          Originator: 'Codex Desktop',
-        },
-      },
-      { timeout: CODEX_RESET_CREDITS_REQUEST_TIMEOUT_MS }
-    );
+    const useSticky = await isCodexStickyFingerprintPluginActive();
+    const result = useSticky
+      ? await codexStickyFingerprintApi.fetchResetCredits(authIndex, {
+          timeout: CODEX_RESET_CREDITS_REQUEST_TIMEOUT_MS,
+        })
+      : await apiCallApi.request(
+          {
+            authIndex,
+            method: 'GET',
+            url: CODEX_RATE_LIMIT_RESET_CREDITS_URL,
+            header: {
+              ...requestHeader,
+              Accept: 'application/json',
+              'OpenAI-Beta': 'codex-1',
+              Originator: 'Codex Desktop',
+            },
+          },
+          { timeout: CODEX_RESET_CREDITS_REQUEST_TIMEOUT_MS }
+        );
 
     if (result.statusCode < 200 || result.statusCode >= 300) {
       return {
@@ -596,12 +603,15 @@ const fetchCodexQuota = async (file: AuthFileItem, t: TFunction): Promise<CodexQ
   const subscriptionActiveUntil = resolveCodexSubscriptionActiveUntil(file);
   const requestHeader = buildCodexRequestHeader(file);
 
-  const result = await apiCallApi.request({
-    authIndex,
-    method: 'GET',
-    url: CODEX_USAGE_URL,
-    header: requestHeader,
-  });
+  const useSticky = await isCodexStickyFingerprintPluginActive();
+  const result = useSticky
+    ? await codexStickyFingerprintApi.fetchQuota(authIndex)
+    : await apiCallApi.request({
+        authIndex,
+        method: 'GET',
+        url: CODEX_USAGE_URL,
+        header: requestHeader,
+      });
 
   if (result.statusCode < 200 || result.statusCode >= 300) {
     throw createStatusError(getApiCallErrorMessage(result), result.statusCode);
@@ -658,17 +668,19 @@ const consumeCodexRateLimitResetCredit = async (
     throw new Error(t('codex_quota.missing_auth_index'));
   }
 
-  const requestHeader = buildCodexRequestHeader(file);
-
-  const result = await apiCallApi.request({
-    authIndex,
-    method: 'POST',
-    url: CODEX_RATE_LIMIT_RESET_CREDITS_CONSUME_URL,
-    header: requestHeader,
-    data: JSON.stringify({
-      redeem_request_id: createCodexRedeemRequestId(),
-    }),
-  });
+  const redeemRequestId = createCodexRedeemRequestId();
+  const useSticky = await isCodexStickyFingerprintPluginActive();
+  const result = useSticky
+    ? await codexStickyFingerprintApi.consumeResetCredit(authIndex, redeemRequestId)
+    : await apiCallApi.request({
+        authIndex,
+        method: 'POST',
+        url: CODEX_RATE_LIMIT_RESET_CREDITS_CONSUME_URL,
+        header: buildCodexRequestHeader(file),
+        data: JSON.stringify({
+          redeem_request_id: redeemRequestId,
+        }),
+      });
 
   if (result.statusCode < 200 || result.statusCode >= 300) {
     throw createStatusError(getApiCallErrorMessage(result), result.statusCode);
