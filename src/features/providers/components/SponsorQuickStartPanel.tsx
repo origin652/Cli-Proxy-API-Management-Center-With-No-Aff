@@ -2,9 +2,8 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
 import { useNotificationStore } from '@/stores';
-import { IconCheckCircle2, IconExternalLink, IconLoader2, IconPlus } from '@/components/ui/icons';
+import { IconCheckCircle2, IconLoader2, IconPlus } from '@/components/ui/icons';
 import { PROVIDER_LOGOS } from '../brandLogos';
-import { APIKEY_FUN_AFFILIATE_URL, APIKEY_FUN_DASHBOARD_URL } from '../sponsor';
 import { isSponsorPartialMutationError } from '../sponsorMutationRecovery';
 import type { ProviderEntryFormInput, ProviderResource } from '../types';
 import type { UseProviderWorkbenchResult } from '../useProviderWorkbench';
@@ -90,7 +89,7 @@ export function SponsorQuickStartPanel({
         </div>
 
         <div className={styles.empty}>
-          <div>{t('providersPage.sponsor.emptyRegisterHint')}</div>
+          <div>{t('providersPage.table.empty')}</div>
           <div className={styles.emptyActions}>
             <button
               type="button"
@@ -101,25 +100,11 @@ export function SponsorQuickStartPanel({
               <IconPlus size={16} />
               <span>{t('providersPage.actions.new')}</span>
             </button>
-            <a
-              className={`${styles.emptyActionButton} ${styles.emptyActionButtonEmphasis}`}
-              href={APIKEY_FUN_AFFILIATE_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <IconExternalLink size={16} />
-              <span>{t('providersPage.sponsor.registerNow')}</span>
-            </a>
           </div>
         </div>
       </section>
     );
   }
-
-  const actionHref = resource ? APIKEY_FUN_DASHBOARD_URL : APIKEY_FUN_AFFILIATE_URL;
-  const actionLabel = resource
-    ? t('providersPage.sponsor.dashboardLink')
-    : t('providersPage.sponsor.registerLink');
 
   return (
     <section className={styles.panel}>
@@ -129,10 +114,6 @@ export function SponsorQuickStartPanel({
           <div className={styles.titleText}>
             <h2 className={styles.title}>{t('providersPage.providerNames.apikeyFun')}</h2>
           </div>
-          <a className={styles.topLink} href={actionHref} target="_blank" rel="noreferrer">
-            <IconExternalLink size={14} />
-            <span>{actionLabel}</span>
-          </a>
         </div>
       </div>
 
