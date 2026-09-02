@@ -54,29 +54,40 @@ export function ProviderResourcePanel({
   const providerTitle = t(`providersPage.providerNames.${group.id}`);
   const logoClassName = [
     styles.logo,
+    logo?.themeSurface ? styles.logoThemeSurface : '',
     logo?.darkSrc ? styles.logoThemeLight : '',
     logo?.invertOnDark ? styles.logoInvertOnDark : '',
   ]
     .filter(Boolean)
     .join(' ');
-  const darkLogoClassName = [styles.logo, styles.logoThemeDark].filter(Boolean).join(' ');
+  const darkLogoClassName = [
+    styles.logo,
+    logo?.themeSurface ? styles.logoThemeSurface : '',
+    styles.logoThemeDark,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const titleContent = (
+    <>
+      {logo ? (
+        <>
+          <img src={logo.src} alt="" aria-hidden="true" className={logoClassName} />
+          {logo.darkSrc ? (
+            <img src={logo.darkSrc} alt="" aria-hidden="true" className={darkLogoClassName} />
+          ) : null}
+        </>
+      ) : null}
+      <h2 className={styles.title}>{providerTitle}</h2>
+    </>
+  );
 
   return (
     <section className={styles.panel}>
       <div className={styles.header}>
         <div className={styles.headerMain}>
           <div className={styles.titleArea}>
-            <div className={styles.titleRow}>
-              {logo ? (
-                <>
-                  <img src={logo.src} alt="" aria-hidden="true" className={logoClassName} />
-                  {logo.darkSrc ? (
-                    <img src={logo.darkSrc} alt="" aria-hidden="true" className={darkLogoClassName} />
-                  ) : null}
-                </>
-              ) : null}
-              <h2 className={styles.title}>{providerTitle}</h2>
-            </div>
+            <div className={styles.titleRow}>{titleContent}</div>
           </div>
           <div className={styles.searchWrap}>
             <span className={styles.searchIcon} aria-hidden="true">
